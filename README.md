@@ -4,7 +4,7 @@ Driver for the YSI EXO sondes that interface with the computer through the signa
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details
 
 [Dartmouth Reality and Robotics Lab](http://rlab.cs.dartmouth.edu/home/)
 
