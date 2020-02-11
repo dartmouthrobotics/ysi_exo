@@ -12,18 +12,18 @@ More details at:
 import serial
 import time
 
+from converter import Converter
 from parameter_codes import *
 from default_values import *
 
 
-class Dcp2(object):
+class Dcp2(Converter):
     """Interface with the DCP2 through serial.
 
     Attributes:
         serial (serial.Serial): serial port object.
         parameters (list): Order of how parameters are interpreted.
         data (list): array with data.
-        parameter_status (list): array with data.
     """
 
     # Commands.
@@ -46,8 +46,7 @@ class Dcp2(object):
         time.sleep(1)
 
         # Read the parameters
-        self.read_parameters()
-        self.date_index, self.time_index = timestamp_available(self.parameters)
+        self._initialize_read()
 
     def read_parameters(self):
         """Read parameters that are returned when reading data."""

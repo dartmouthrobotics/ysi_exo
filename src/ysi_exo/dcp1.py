@@ -13,19 +13,19 @@ import enum
 import minimalmodbus
 import time
 
+from converter import Converter
 from parameter_codes import *
 from default_values import *
-from utilities import timestamp_available
 
 
-class Dcp1(object):
+class Dcp1(Converter):
     """Interface with the DCP through serial.
 
     Attributes:
         serial (minimalmodbus.Instrument): serial port object.
         parameters (list): Order of how parameters are interpreted.
         data (list): array with data.
-        parameter_status (list): array with data.
+        parameter_status (list): array with data status.
     """
 
     # REGISTERS (LENGTH 1).
@@ -61,12 +61,14 @@ class Dcp1(object):
         self.serial.serial.baudrate = baudrate
         time.sleep(1)
 
-        # Read the parameters
-        self.read_parameters()
-        self.date_index, self.time_index = timestamp_available(self.parameters)
+        self._initialize_read()
 
     def read_parameters(self):
-        """Read parameters that are returned when reading data."""
+        """Read parameters that are returned when reading data.
+
+        Read parameters from the registers. When the value is 0
+        it means that no other values are stored.
+        """
 
         self.parameters = []
         for register_parameter_type in self.REGISTER_PARAMETER_TYPE:
