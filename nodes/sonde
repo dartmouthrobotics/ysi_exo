@@ -17,15 +17,15 @@ def sonde_node():
     rospy.init_node('sonde_driver', anonymous=False)
     rospy.sleep(1)
 
-    dcp_version = rospy.get_param('dcp_version', DCP_V1)
-    serial_port = rospy.get_param('serial_port', SERIAL_PORT)
-    baudrate = rospy.get_param('baudrate', BAUDRATE)
-    frame_id = rospy.get_param('sonde_frame', SONDE_LINK)
+    dcp_version = rospy.get_param('~dcp_version', DCP_V1)
+    serial_port = rospy.get_param('~serial_port', SERIAL_PORT)
+    baudrate = rospy.get_param('~baudrate', BAUDRATE)
+    frame_id = rospy.get_param('~sonde_frame', SONDE_LINK)
 
     # Initialization of the serial port.
     if dcp_version == DCP_V1:
         import ysi_exo.dcp1
-        address = rospy.get_param('address', ysi_exo.dcp1.Dcp1.ADDRESS)
+        address = rospy.get_param('~address', ysi_exo.dcp1.Dcp1.ADDRESS)
         sonde = ysi_exo.dcp1.Dcp1(serial_port=serial_port, baudrate=baudrate,
                 address=address)
     elif dcp_version == DCP_V2:
