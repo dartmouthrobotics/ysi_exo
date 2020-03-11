@@ -71,6 +71,10 @@ class ExoCsvReader(Converter):
 
         if self.parameters:
             raw_data_list = self.csv_file.readline().split(self.sep)
+            if not raw_data_list[0]:
+                # If end of the line.
+                raise RuntimeWarning
+                return
             for i in xrange(len(self.parameters)):
                 raw_data = raw_data_list[self.parameters_indices[i]]
                 if self.parameters[i] == TIME:

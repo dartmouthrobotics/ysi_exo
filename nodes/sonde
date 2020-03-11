@@ -31,6 +31,10 @@ def sonde_node():
     elif dcp_version == DCP_V2:
         import ysi_exo.dcp2
         sonde = ysi_exo.dcp2.Dcp2(serial_port=serial_port, baudrate=baudrate)
+    elif dcp_version == EXO_CSV:
+        import ysi_exo.exo_csv_reader
+        csv_file_path = rospy.get_param('~csv_file_path')
+        sonde = ysi_exo.exo_csv_reader.ExoCsvReader(csv_file_path)
     else:
         sonde = None
 
@@ -56,7 +60,11 @@ def sonde_node():
         while not rospy.is_shutdown():
             # Reading and publishing.
             
-            sonde.read_data()
+            try:
+                sonde.read_data()
+            except RuntimeWarning:
+                rate.sleep()
+                continue
             if stamp_from_sonde:
                 stamp = rospy.Time(convert_date_to_epoch(
                     sonde.data[sonde.date_index],
