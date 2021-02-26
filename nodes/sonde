@@ -40,7 +40,7 @@ def sonde_node():
 
     rospy.loginfo("Sonde initialized.")
 
-    if not (Sonde is None):
+    if not (sonde is None):
         # Initialization of the publisher.
         pub = rospy.Publisher('sonde', Sonde, queue_size=10, latch=True)
         sonde_msg = Sonde()
