@@ -39,6 +39,7 @@ uint8 CL_MG = 112
 uint8 BGAPC_RFU = 216
 uint8 NLFCOND_U = 238
 uint8 CABLE = 230
+uint8 POSITION_M = 240
 
 uint8[] parameters # List of parameters saved.
 float32[] data # Corresponding data to each parameter; see the manual.

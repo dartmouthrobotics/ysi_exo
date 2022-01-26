@@ -43,6 +43,7 @@ CL_MG = 112
 BGAPC_RFU = 216
 NLFCOND_U = 238
 CABLE = 230
+POSITION_M = 240
 
 DATE_FORMAT = {DATE_DD: "%d%m%y", DATE_MM: "%m%d%y", DATE_YY: "%y%m%d"}
 TIME_FORMAT = "%H%M%S"
@@ -71,7 +72,7 @@ PARAM_STRINGS = {\
     u'pH' : PH,
     u'pH mV' : PH_M, 
     u'Temp \xb0C' : TEMP_C, 
-    #u'Vertical Position m' : , 
+    u'Vertical Position m' : POSITION_M, 
     u'Battery V' : BATTERY, 
     u'Cable Pwr V' : CABLE
 }

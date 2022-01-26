@@ -21,6 +21,7 @@ def sonde_node():
     serial_port = rospy.get_param('~serial_port', SERIAL_PORT)
     baudrate = rospy.get_param('~baudrate', BAUDRATE)
     frame_id = rospy.get_param('~sonde_frame', SONDE_LINK)
+    stamp_from_rostime = bool(rospy.get_param('~stamp_from_rostime', 'False'))
 
     # Initialization of the serial port.
     if dcp_version == DCP_V1:
@@ -52,7 +53,9 @@ def sonde_node():
         sonde_msg.parameters = sonde.parameters
 
         # Set the boolean to use specific time.
-        if sonde.date_index != -1 and sonde.time_index != -1:
+        if stamp_from_rostime:
+            stamp_from_sonde = False
+        elif sonde.date_index != -1 and sonde.time_index != -1:
             stamp_from_sonde = True
         else:
             stamp_from_sonde = False
@@ -61,7 +64,10 @@ def sonde_node():
             # Reading and publishing.
             
             try:
+                #readstart = rospy.Time.now()
                 sonde.read_data()
+                #readduration = rospy.Time.now() - readstart
+                #rospy.loginfo('Finished read. Took %.3f sec.' % readduration.to_sec())
             except RuntimeWarning:
                 rate.sleep()
                 continue
@@ -71,8 +77,8 @@ def sonde_node():
                     sonde.data[sonde.time_index], 
                     sonde.parameters[sonde.date_index]))
             else:
-                stamp = rospy.get_time()
-
+                #stamp = rospy.get_time()
+                stamp = rospy.Time.now()
             sonde_msg.header.stamp = stamp
 
             sonde_msg.data = sonde.data 
