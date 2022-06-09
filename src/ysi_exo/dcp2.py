@@ -31,7 +31,7 @@ class Dcp2(Converter):
     COMMAND_DATA = "Data"
     RETURN_CHAR = "\r"
 
-    READING_DELAY = 0.3 # delay after writing for reading (s).
+    READING_DELAY = 0.0 # delay after writing for reading (s).
 
     def __init__(self, serial_port=SERIAL_PORT, baudrate=BAUDRATE):
         """Initialization of the serial port and parameters."""
