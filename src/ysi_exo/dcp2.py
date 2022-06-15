@@ -15,6 +15,7 @@ import time
 from converter import Converter
 from parameter_codes import *
 from default_values import *
+from utilities import convert_epoch_to_date
 
 
 class Dcp2(Converter):
@@ -30,6 +31,7 @@ class Dcp2(Converter):
     COMMAND_PARA = "para"
     COMMAND_DATA = "data"
     COMMAND_SETECHO = "setecho" # possible parameters 0 (disable echo) or 1
+    COMMAND_TIME = "time"
     RETURN_CHAR = "\r"
 
     # Returns by the DCP2 Serial.
@@ -42,7 +44,6 @@ class Dcp2(Converter):
     def __init__(self, serial_port=SERIAL_PORT, baudrate=BAUDRATE):
         """Initialization of the serial port and parameters."""
 
-        print("initializing")
         # Initialization of the serial port.
         self.serial = serial.Serial(serial_port, baudrate,
             timeout=SERIAL_TIMEOUT)
@@ -82,7 +83,15 @@ class Dcp2(Converter):
         return data
 
     def _disable_echo(self):
-        self.serial.write(self.COMMAND_SETECHO + " 0" + self.RETURN_CHAR)
+        self.serial.write(self.COMMAND_SETECHO + " " + "0" + self.RETURN_CHAR)
         time.sleep(self.READING_DELAY)
+        raw_line = self.serial.read(self.serial.inWaiting())
+        return self.RETURN_OK in raw_line
+
+    def set_time(self, epoch_time):
+        current_time_ysi_format = convert_epoch_to_date(epoch_time)
+        self.serial.write(self.COMMAND_TIME + " " + 
+            current_time_ysi_format + self.RETURN_CHAR)
+        time.sleep(self.INITIALIZATION_DELAY)
         raw_line = self.serial.read(self.serial.inWaiting())
         return self.RETURN_OK in raw_line
