@@ -14,9 +14,9 @@ import io
 import enum
 import time
 
-from converter import Converter
-from parameter_codes import *
-from default_values import *
+from ysi_exo.converter import Converter
+from ysi_exo.parameter_codes import *
+from ysi_exo.default_values import *
 
 
 class ExoCsvReader(Converter):
