@@ -9,7 +9,7 @@ More details at:
 
 """
 
-from utilities import timestamp_available
+from ysi_exo.utilities import timestamp_available
 
 
 class Converter(object):
