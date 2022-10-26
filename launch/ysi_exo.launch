@@ -1,13 +1,15 @@
 <launch>
   <arg name="dcp_version" default="1" />
   <arg name="serial_port" default="/dev/ttyUSB0" />
-  <arg name="baudrate" default="9600" />
+  <arg name="baudrate" default="115200" />
   <arg name="sonde_frame" default="sonde" />
+  <arg name="use_timestamp_from_sonde" default="0" />
 
-  <node pkg="ysi_exo" type="sonde" name="sonde">
+  <node pkg="ysi_exo" type="sonde" name="sonde" output="screen">
     <param name="dcp_version" value="$(arg dcp_version)"/>
     <param name="serial_port" value="$(arg serial_port)"/>
     <param name="baudrate" value="$(arg baudrate)"/>
     <param name="sonde_frame" value="$(arg sonde_frame)"/>
+    <param name="use_timestamp_from_sonde" value="$(arg use_timestamp_from_sonde)"/>
   </node>
 </launch>

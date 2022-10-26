@@ -1,3 +1,4 @@
+import datetime
 import time
 from ysi_exo.parameter_codes import *
 
@@ -18,6 +19,23 @@ def convert_date_to_epoch(date_value, time_value, date_parameter_code=DATE_YY):
     return int(time.mktime(
         time.strptime(str(int(date_value))+str(int(time_value)), 
         DATE_FORMAT[date_parameter_code]+TIME_FORMAT))) 
+
+
+def convert_epoch_to_date(epoch_time):
+    """Convert date and time to epoch.
+
+    Args:
+        epoch_time (float): epoch time
+
+    Returns:
+        string: time in TIME_FORMAT_YSI
+    
+    .. _YSI EXO:
+        https://www.ysi.com/File%20Library/Documents/Manuals/EXO-User-Manual-Web.pdf
+    """
+    local_time = datetime.datetime.fromtimestamp(epoch_time).strftime(TIME_FORMAT_YSI) 
+
+    return local_time
 
 def timestamp_available(parameter_codes):
     """Find whether the timestamp is available in the parameters returned.

@@ -47,6 +47,7 @@ POSITION_M = 240
 
 DATE_FORMAT = {DATE_DD: "%d%m%y", DATE_MM: "%m%d%y", DATE_YY: "%y%m%d"}
 TIME_FORMAT = "%H%M%S"
+TIME_FORMAT_YSI = "%H:%M:%S"
 
 PARAM_STRINGS = {\
     u'Date (MM/DD/YYYY)' : DATE_MM,

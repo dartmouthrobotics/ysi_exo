@@ -10,6 +10,8 @@ from ysi_exo.msg import Sonde
 
 RATE = 1.0
 SONDE_LINK = "sonde"
+USE_TIMESTAMP_FROM_SONDE = 1 # 1: use timestamp from sonde, 0: use timestamp from ROS
+SYNC_TIMESTAMP = 1 # 1: sync timestamp of sonde with pc; 0: don't sync.
 
 def sonde_node():
     """ROS node to publish EXO sonde measurements."""
@@ -21,6 +23,7 @@ def sonde_node():
     serial_port = rospy.get_param('~serial_port', SERIAL_PORT)
     baudrate = rospy.get_param('~baudrate', BAUDRATE)
     frame_id = rospy.get_param('~sonde_frame', SONDE_LINK)
+
     stamp_from_rostime = bool(rospy.get_param('~stamp_from_rostime', 'False'))
 
     # Initialization of the serial port.
@@ -32,6 +35,9 @@ def sonde_node():
     elif dcp_version == DCP_V2:
         import ysi_exo.dcp2
         sonde = ysi_exo.dcp2.Dcp2(serial_port=serial_port, baudrate=baudrate)
+        sync_timestamp = rospy.get_param('~sync_timestamp', SYNC_TIMESTAMP)
+        if sync_timestamp:
+            sonde.set_time(rospy.get_time())
     elif dcp_version == EXO_CSV:
         import ysi_exo.exo_csv_reader
         csv_file_path = rospy.get_param('~csv_file_path')
@@ -71,7 +77,9 @@ def sonde_node():
             except RuntimeWarning:
                 rate.sleep()
                 continue
+
             if stamp_from_sonde:
+                # timestamp from sonde
                 stamp = rospy.Time(convert_date_to_epoch(
                     sonde.data[sonde.date_index],
                     sonde.data[sonde.time_index], 
@@ -79,6 +87,7 @@ def sonde_node():
             else:
                 #stamp = rospy.get_time()
                 stamp = rospy.Time.now()
+
             sonde_msg.header.stamp = stamp
 
             sonde_msg.data = sonde.data 
