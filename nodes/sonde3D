@@ -7,7 +7,7 @@ from sensor_msgs.msg import PointCloud, ChannelFloat32
 from ysi_exo.msg import Sonde
 
 class sonde3D():
-    """ Class to run sim """
+    """ Class to update sonde tf and pointcloud """
     def __init__(self):
         rospy.init_node('sonde3D')
         self.get_params()
@@ -16,11 +16,12 @@ class sonde3D():
 
         # ROS subscribers
         self.sonde = Sonde()
-        tf_buffer = tf2_ros.Buffer()
-        self.listener = tf2_ros.TransformListener(tf_buffer)
+        self.tf_buffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
         # ROS publishers
         self.t = geometry_msgs.msg.TransformStamped()
+        self.sonde_pointcloud = PointCloud()
 
         # Create a transform with constant values
         self.t.header.frame_id = "base_link"  # Parent frame
@@ -29,78 +30,73 @@ class sonde3D():
         self.t.transform.translation.x = 0.0
         self.t.transform.translation.y = 0.0
         # Constant rotation, assuming no rotation change
-        self.t.transform.rotation.x = 0
-        self.t.transform.rotation.y = 0
+        self.ansform.rotation.y = 0
         self.t.transform.rotation.z = 0
         self.t.transform.rotation.w = 1
 
     def init_subscribers(self):
-        # xbox joystick commands
         rospy.Subscriber(self.config.topics.sonde, Sonde, self.sonde_handler)
-        rospy.loginfo('Subscribed to xbox joystick cmds: %s' % self.config.topics.joy)
 
     def init_publishers(self):
-        self.pointcloud_publisher = rospy.Publisher("/sonde_pointcloud", PointCloud, queue_size=10)
+        self.pointcloud_publisher = rospy.Publisher(self.config.topics.sonde_pointcloud, PointCloud, queue_size=10)
         self.broadcaster = tf2_ros.TransformBroadcaster()
+
+    def get_params(self):
+        class Anon: pass
+        self.config = Anon()
+        self.config.topics = Anon()
+        # Subscribed topic namespaces
+        self.config.topics.sonde = rospy.get_param('/sonde', '/sonde')
+        # Published topic namespaces
+        self.config.topics.sonde_pointcloud = rospy.get_param('/sonde_pointcloud', '/sonde_pointcloud')
 
     def sonde_handler(self, msg):
 
-        temp_c = msg['data_2']  # Temperature, °C
-        depth_m = msg['data_14'] # Depth, m
+        # TODO: Add all parameters
+        self.temp_c = msg['data_2']  # Temperature, °C
+        self.depth_m = msg['data_14'] # Depth, m
 
-        self.update_tf(depth_m)
-        x, y, z = self.get_sonde_position()
+        self.update_tf(self.depth_m)
+        self.x, self.y, self.z = self.get_sonde_position()
 
-        # Create a PointCloud message
+        self.generate_pointcloud()
+
+    def generate_pointcloud(self):
         cloud = PointCloud()
         cloud.header.stamp = rospy.Time.now()
         cloud.header.frame_id = "sonde_frame"  # Adjust as necessary
 
-        # Add the point representing the sonde's position
-        point = Point32()
-        point.x = x
-        point.y = y
-        point.z = z
+        point = Point32() # point representing the sonde's position
+        point.x = self.x
+        point.y = self.y
+        point.z = self.z
         cloud.points.append(point)
 
-        # Create a ChannelFloat32 for temperature and add the temperature data
-        temp_channel = ChannelFloat32()
+        temp_channel = ChannelFloat32() # Create a ChannelFloat32 for temperature
         temp_channel.name = "temperature"
-        temp_channel.values.append(temp_c)  # Assuming one temperature for one point
+        temp_channel.values.append(self.temp_c)  # Assuming one temperature for one point
         cloud.channels.append(temp_channel)
 
-        # Publish the PointCloud message
         self.pointcloud_publisher.publish(cloud)
 
     def update_tf(self, depth):
-        # Update the header timestamp every iteration to the current time
         self.t.header.stamp = rospy.Time.now()
-
-        # Update only the z-axis translation
-        self.t.transform.translation.z = depth
-
-        # Broadcast the updated transform
-        self.broadcaster.sendTransform(self.t)
+        self.t.transform.translation.z = depth # Update only the z-axis translation
+        self.broadcaster.sendTransform(self.t) # Broadcast the updated transform
 
     def get_sonde_position(self):
-        # Define the sonde's frame and the reference frame
-        sonde_frame = 'sonde_frame'  # Change to your sonde's frame id
-        reference_frame = 'world'  # Change to your reference frame (e.g., 'base_link', 'world')
+        sonde_frame = 'sonde_frame'  # Sonde's frame id
+        reference_frame = 'world'  # reference frame (e.g., 'base_link', 'world')
 
-        # Wait for a valid transform (use a timeout to avoid hanging indefinitely)
+        # wait for the frame to become available, use timeout to avoid hanging indefinitely
         try:
-            # It is often useful to wait for the frame to become available
             self.tf_buffer.can_transform(reference_frame, sonde_frame, rospy.Time(0), rospy.Duration(4.0))
-
-            # Lookup the transform (assuming you want the latest available)
             trans = self.tf_buffer.lookup_transform(reference_frame, sonde_frame, rospy.Time(0))
-
-            # Extract and return the translation components (x, y, z)
             return trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             rospy.logerr(f"Error getting TF for sonde: {e}")
-            return None, None, None  # Or some default/error value
+            return None, None, None
 
 if __name__ == '__main__':
     try:
