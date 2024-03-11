@@ -13,9 +13,9 @@ import enum
 import minimalmodbus
 import time
 
-from converter import Converter
-from parameter_codes import *
-from default_values import *
+from ysi_exo.converter import Converter
+from ysi_exo.parameter_codes import *
+from ysi_exo.default_values import *
 
 
 class Dcp1(Converter):
@@ -86,7 +86,7 @@ class Dcp1(Converter):
         """Read data."""
 
         if self.parameters:
-            for i in xrange(len(self.parameters)):
+            for i in range(len(self.parameters)):
                 data_value = self.serial.read_float(self.REGISTER_FLOAT_DATA[i], 
                     byteorder=self.BYTE_ORDER)
                 self.data[i] = data_value

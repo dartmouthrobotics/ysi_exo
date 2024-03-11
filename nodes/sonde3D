@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+import rospy
+import tf2_ros
+import geometry_msgs.msg
+from geometry_msgs.msg import Point32
+from sensor_msgs.msg import PointCloud, ChannelFloat32
+from ysi_exo.msg import Sonde
+
+class sonde3D():
+    """ Class to update sonde tf and pointcloud """
+    def __init__(self):
+        rospy.init_node('sonde3D')
+
+        # Setup tf listener
+        self.tf_buffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tf_buffer)
+
+        # Setup tf broadcaster
+        self.t = geometry_msgs.msg.TransformStamped()
+        self.broadcaster = tf2_ros.TransformBroadcaster()
+
+        # Create a transform with constant values, only z update
+        self.t.header.frame_id = "hull_ref"  # Parent frame
+        self.t.child_frame_id = "sonde"  # Sonde frame
+        self.t.transform.translation.x = 0.0
+        self.t.transform.translation.y = 0.0
+        self.t.transform.rotation.x = 0
+        self.t.transform.rotation.y = 0
+        self.t.transform.rotation.z = 0
+        self.t.transform.rotation.w = 1
+
+        self.init_subscribers()
+        self.init_publishers()
+
+    def init_subscribers(self):
+        rospy.Subscriber('/sonde', Sonde, self.sonde_handler)
+
+    def init_publishers(self):
+        self.pointcloud_publisher = rospy.Publisher('/sonde_pointcloud', PointCloud, queue_size=10)
+
+    def sonde_handler(self, msg):
+
+        # TODO: Add all parameters
+        self.timestamp = msg.header.stamp
+        self.temp_c = msg.data[2]  # Temperature, °C
+        self.depth_m = msg.data[14] # Depth, m
+
+        self.update_tf(self.depth_m)
+        self.generate_pointcloud()
+
+    def update_tf(self, depth):
+        self.t.header.stamp = self.timestamp # use sonde msg timestamp
+        self.t.transform.translation.z = -depth # Update only the z-axis translation
+        self.broadcaster.sendTransform(self.t) # Broadcast the updated transform
+
+    def get_sonde_position(self):
+        try:
+            # wait for the frame to become available, use timeout to avoid hanging indefinitely
+            self.tf_buffer.can_transform('utm_local', 'sonde', rospy.Time(0), rospy.Duration(4.0))
+            trans = self.tf_buffer.lookup_transform('utm_local', 'sonde', rospy.Time(0))
+            return trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            rospy.logwarn(f"Error getting TF from ysi_sonde to utm_local: {e}")
+            return None, None, None
+
+    def generate_pointcloud(self):
+        # Get the sonde's position in the utm_local frame
+        sonde_utm_x, sonde_utm_y, sonde_utm_z = self.get_sonde_position()
+
+        # Proceed only if transformation was successful
+        if None not in (sonde_utm_x, sonde_utm_y, sonde_utm_z):
+            # Create PointCloud message and set the frame to 'utm_local'
+            self.sonde_pointcloud = PointCloud()
+            self.sonde_pointcloud.header.stamp = self.timestamp # use sonde msg timestamp
+            self.sonde_pointcloud.header.frame_id = "utm_local"
+
+            # Add the point representing the sonde's position in the utm_local frame
+            point = Point32()
+            point.x = sonde_utm_x
+            point.y = sonde_utm_y
+            point.z = sonde_utm_z
+            self.sonde_pointcloud.points = [point]  # Resetting points with the new point
+
+            # Create and add temperature channel
+            temp_channel = ChannelFloat32()
+            temp_channel.name = "temperature"
+            temp_channel.values = [self.temp_c]  # Resetting temperature values with the new value
+            self.sonde_pointcloud.channels = [temp_channel]  # Resetting channels with the new channel
+
+            # Publish the PointCloud message
+            self.pointcloud_publisher.publish(self.sonde_pointcloud)
+
+if __name__ == '__main__':
+    try:
+        progName = "Sonde 3D"
+        rospy.loginfo("Starting %s" % (progName))
+        sonde_node = sonde3D()
+        rospy.spin()  # Keep the program alive and handle callbacks
+    except rospy.ROSInterruptException:
+        pass

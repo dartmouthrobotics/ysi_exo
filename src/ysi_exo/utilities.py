@@ -1,6 +1,6 @@
 import datetime
 import time
-from parameter_codes import *
+from ysi_exo.parameter_codes import *
 
 def convert_date_to_epoch(date_value, time_value, date_parameter_code=DATE_YY):
     """Convert date and time to epoch.
